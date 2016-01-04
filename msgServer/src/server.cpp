@@ -1,37 +1,37 @@
 #include "ros/ros.h"
-#include "std_msgs/String.h"
+#include "geometry_msgs/Twist.h"
 
 #include <cstdio>
 #include <sstream>
 
 /**
- * This tutorial demonstrates simple sending of messages over the ROS system.
+ * Returns a Twist message.
  */
-int main(int argc, char **argv)
-{
-  
+geometry_msgs::Twist getTwist(char c) {
+	geometry_msgs::Twist msg;
+	msg.linear.x = 1.0;
+	return msg;
+}
+
+/**
+ * This should send Twist messages according to what key you press.
+ */
+int main(int argc, char **argv) {
   ros::init(argc, argv, "server");
   ros::NodeHandle n;
-  ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
+  ros::Publisher chatter_pub = n.advertise<geometry_msgs::Twist>("chatter", 1000);
   ros::Rate loop_rate(100);
 
   char c;
   
   system ("/bin/stty raw");
-  while (ros::ok() && c != 3)
-  {
-    /**
-     * This is a message object. You stuff it with data, and then publish it.
-     */
-    std_msgs::String msg;
-    
+  while (ros::ok() && c != 3) {
     c = getchar();
-	
-    std::stringstream ss;
-    ss << c;
-    msg.data = ss.str();
+    
+    geometry_msgs::Twist msg = getTwist(c);
 
-    ROS_INFO("%s", msg.data.c_str());
+    ROS_INFO("Linear: %f %f %f", msg.linear.x, msg.linear.y, msg.linear.z);
+    ROS_INFO("Angular: %f %f %f", msg.angular.x, msg.angular.y, msg.angular.z);
 
     chatter_pub.publish(msg);
     ros::spinOnce();
@@ -41,3 +41,4 @@ int main(int argc, char **argv)
   system ("/bin/stty cooked");
   return 0;
 }
+

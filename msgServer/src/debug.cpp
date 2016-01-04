@@ -1,12 +1,13 @@
 #include "ros/ros.h"
-#include "std_msgs/String.h"
+#include "geometry_msgs/Twist.h"
 
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
  */
-void chatterCallback(const std_msgs::String::ConstPtr& msg)
+void chatterCallback(const geometry_msgs::Twist msg)
 {
-  ROS_INFO("Key pressed: %s", msg->data.c_str());
+  ROS_INFO("Linear: %f %f %f", msg.linear.x, msg.linear.y, msg.linear.z);
+  ROS_INFO("Angular: %f %f %f", msg.angular.x, msg.angular.y, msg.angular.z);
 }
 
 int main(int argc, char **argv)
