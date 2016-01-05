@@ -1,4 +1,3 @@
-
 /**
 * [TI2726-B] Embedded Software
 * Code for line following robot.
@@ -43,6 +42,8 @@
 #include <std_msgs/Empty.h>
 #include <geometry_msgs/Twist.h>
 
+#include "motor.h"
+
 int LEFT_FWD = 6;        // LCHB-100 H Bridge 1FWD
 int LEFT_BCK = 7;        // LCHB-100 H Bridge 1REV
 int LEFT_ENABLE = 24;    // LCHB-100 H Bridge 1EN
@@ -54,9 +55,6 @@ int BLUETOOTH_RX = 19;   // HC-05 Bluetooth dongle RX
 int US_ECHO = 22;        // HC-SR04 ultrasonic sensor ECHO
 int US_TRIGGER = 23;     // HC-SR04 ultrasonic sensor TRIGGER
 int LED = 13;            // Yellow LED light
-
-char input = 'S';        // Input from the sender
-int velocity = 0;        // Velocity of the robot
 
 // Needed to set up a bluetooth connection to the main station
 class NewHardware : public ArduinoHardware {
@@ -106,55 +104,6 @@ void setup() { // No clue if any of this is correct
 void loop() {
   nh.spinOnce();
   
-  char det = check();
-  
-  switch(det) {
-    case 'W':          // W pressed, so go forward
-    // 
-    break;
+  message = Serial1.read();
     
-    case 'S':          // S pressed, so go backward
-    // 
-    break;
-    
-    case 'A':          // A pressed, so go left
-    // 
-    break;
-    
-    case 'D':          // D pressed, so go right
-    // 
-    break;
-    
-    case 'F':          // F pressed, so halt
-    // 
-    break;
-    
-  }
-    
-}
-
-/**
-* Method that checks for input from the sender
-* and puts it in a variable, to be used in the loop.
-* Also configures the speed of the robot.
-*/
-int check() {
-  
-  // Return -1 when the serial is not available
-  if (Serial1.available() <= 0) {
-    return -1;
-  }
-  
-  input = Serial1.read();
-  
-  // Set the velocity of the robot
-  if (input == 'Z' && velocity >= 10) {
-    velocity -= 10;
-    Serial1.write("Set speed to: " + velocity);
-  } else if (input == 'X' && velocity <= 90) {
-    velocity += 10;
-    Serial1.write("Set speed to: " + velocity);
-  }
-  
-  return input;
 }
