@@ -30,6 +30,7 @@
 *  F = stop
 *
 */
+#include <stdlib.h>
 #include <ros.h>
 #include <ArduinoHardware.h>
 
@@ -41,8 +42,6 @@
 #include <std_msgs/Int32.h>
 #include <std_msgs/Empty.h>
 #include <geometry_msgs/Twist.h>
-
-#include "motor.h"
 
 int LEFT_FWD = 6;        // LCHB-100 H Bridge 1FWD
 int LEFT_BCK = 7;        // LCHB-100 H Bridge 1REV
@@ -62,13 +61,55 @@ class NewHardware : public ArduinoHardware {
         NewHardware() : ArduinoHardware(&Serial1, 57600) {};
 };
 
-//Motor m1(7, 24, 6); //?
-//Motor m2(3, 25, 2); //?
-//MotorSet motor(&m1, &m2); //?
+void enableBot() {
+	digitalWrite(LEFT_ENABLE, HIGH);
+	digitalWrite(RIGHT_ENABLE, HIGH);
+}
 
-//void cmd_vel_cb(const geometry_msgs::Twist& cmd_vel_msg) {
-//    motor.update(cmd_vel_msg.linear.x, cmd_vel_msg.angular.z);
-//}
+void disableBot() {
+	digitalWrite(LEFT_ENABLE, LOW);
+	digitalWrite(RIGHT_ENABLE, LOW);
+}
+
+void stopBot() {
+	analogWrite(LEFT_FWD, 0);
+	analogWrite(RIGHT_FWD, 0);
+	analogWrite(LEFT_BCK, 0);
+	analogWrite(RIGHT_BCK, 0);
+}
+
+int updateBot(double lineair_x, double angular_z) {
+    if (lineair_x == 0.0 && angular_z == 0.0) return -1;
+	
+    if (lineair_x > 0.0 && angular_z == 0.0) {
+	analogWrite(LEFT_BCK, 0);
+	analogWrite(RIGHT_BCK, 0);
+	analogWrite(LEFT_FWD, 25.5 * lineair_x);
+	analogWrite(RIGHT_FWD, 25.5 * lineair_x);
+    } else if (lineair_x < 0.0 && angular_z == 0.0) {
+	analogWrite(LEFT_FWD, 0);
+	analogWrite(RIGHT_FWD, 0);
+	analogWrite(LEFT_BCK, 25.5 * abs(lineair_x));
+	analogWrite(RIGHT_BCK, 25.5 * abs(lineair_x));
+    } else if (lineair_x == 0.0 && angular_z > 0.0) {
+	// TODO Tweak values
+	analogWrite(LEFT_FWD, (25.5 * lineair_x) / angular_z);
+	analogWrite(RIGHT_FWD, 25.5 * lineair_x);
+	analogWrite(LEFT_BCK, 0);
+	analogWrite(RIGHT_BCK, 0);
+    } else if (lineair_x == 0.0 && angular_z < 0.0) {
+	// TODO Tweak values
+	analogWrite(LEFT_FWD, (25.5 * lineair_x) / abs(angular_z));
+	analogWrite(RIGHT_FWD, 25.5 * lineair_x);
+	analogWrite(LEFT_BCK, 0);
+	analogWrite(RIGHT_BCK, 0);
+    }
+    return 0;
+}
+
+void cmd_vel_cb(const geometry_msgs::Twist& msg) {
+    updateBot(msg.linear.x, msg.angular.z);
+}
 
 // Adds a new subscriber
 ros::NodeHandle_<NewHardWare> nh;
@@ -104,6 +145,6 @@ void setup() { // No clue if any of this is correct
 void loop() {
   nh.spinOnce();
   
-  message = Serial1.read();
+  //geometry_msgs::Twist message = Serial1.read();
     
 }

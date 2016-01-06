@@ -58,7 +58,7 @@ geometry_msgs::Twist getTwist(char c) {
 int main(int argc, char **argv) {
   ros::init(argc, argv, "server");
   ros::NodeHandle n;
-  ros::Publisher chatter_pub = n.advertise<geometry_msgs::Twist>("chatter", 1000);
+  ros::Publisher chatter_pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 1000);
   ros::Rate loop_rate(100);
 
   char c;

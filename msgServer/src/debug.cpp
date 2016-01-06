@@ -15,7 +15,7 @@ int main(int argc, char **argv)
   
   ros::init(argc, argv, "debug");
   ros::NodeHandle n;
-  ros::Subscriber sub = n.subscribe("chatter", 1000, chatterCallback);
+  ros::Subscriber sub = n.subscribe("cmd_vel", 1000, chatterCallback);
 
   ros::spin();
 
