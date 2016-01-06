@@ -34,11 +34,6 @@
 #include <ros.h>
 #include <ArduinoHardware.h>
 
-#include <ArduinoRobotMotorBoard.h>
-#include <LineFollow.h>
-#include <EasyTransfer2.h>
-#include <Multiplexer.h>
-
 #include <std_msgs/Int32.h>
 #include <std_msgs/Empty.h>
 #include <geometry_msgs/Twist.h>
@@ -60,6 +55,10 @@ class NewHardware : public ArduinoHardware {
     public: 
         NewHardware() : ArduinoHardware(&Serial1, 57600) {};
 };
+
+// Adds a new subscriber
+ros::NodeHandle_<NewHardware> nh;
+ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", &cmd_vel_cb);
 
 void enableBot() {
 	digitalWrite(LEFT_ENABLE, HIGH);
@@ -111,11 +110,10 @@ void cmd_vel_cb(const geometry_msgs::Twist& msg) {
     updateBot(msg.linear.x, msg.angular.z);
 }
 
-// Adds a new subscriber
-ros::NodeHandle_<NewHardWare> nh;
-ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", &cmd_vel_cb);
-
 void setup() { // No clue if any of this is correct
+  Serial1.println("Initializing Arduino");
+  Serial1.println("     Wuq©");
+  
   Serial.begin(57600);                 // Set the speed of the USB connection (in baud)
   Serial1.begin(57600);                // Set the speed of the bluetooth connection (in baud)
   
@@ -135,11 +133,7 @@ void setup() { // No clue if any of this is correct
   pinMode(US_TRIGGER, INPUT);
   pinMode(LED, OUTPUT);
   
-  Serial1.println("Initializing Arduino");
-  Serial1.println("     Wuq©");
-  
-  // Turn motors off?
-  // Do stuffs
+  enableBot();
 }
 
 void loop() {
