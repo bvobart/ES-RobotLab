@@ -1,0 +1,2 @@
+rosrun rosserial_python serial_node.py /dev/rfcomm0
+rosrun msgServer server

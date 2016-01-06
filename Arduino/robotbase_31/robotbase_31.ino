@@ -11,7 +11,7 @@
 *
 * For specifications, see: 
 *   http://www.st.ewi.tudelft.nl/~koen/ti2726-b/robot-manual.pdf
-*
+*wsws
 * Created by:
 * Group number: 31
 * Student 1:
@@ -56,9 +56,22 @@ class NewHardware : public ArduinoHardware {
         NewHardware() : ArduinoHardware(&Serial1, 57600) {};
 };
 
+void cmd_vel_cb(const geometry_msgs::Twist& msg) {
+    updateBot(msg.linear.x, msg.angular.z);
+}
+
 // Adds a new subscriber
 ros::NodeHandle_<NewHardware> nh;
 ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", &cmd_vel_cb);
+
+void startup() {
+  digitalWrite(LEFT_FWD, LOW);
+  digitalWrite(LEFT_BCK, LOW);
+  digitalWrite(RIGHT_FWD, LOW);
+  digitalWrite(RIGHT_BCK, LOW);
+  
+  enableBot();
+}
 
 void enableBot() {
 	digitalWrite(LEFT_ENABLE, HIGH);
@@ -78,7 +91,7 @@ void stopBot() {
 }
 
 int updateBot(double lineair_x, double angular_z) {
-    if (lineair_x == 0.0 && angular_z == 0.0) return -1;
+  if (lineair_x == 0.0 && angular_z == 0.0) return -1;
 	
     if (lineair_x > 0.0 && angular_z == 0.0) {
 	analogWrite(LEFT_BCK, 0);
@@ -106,10 +119,6 @@ int updateBot(double lineair_x, double angular_z) {
     return 0;
 }
 
-void cmd_vel_cb(const geometry_msgs::Twist& msg) {
-    updateBot(msg.linear.x, msg.angular.z);
-}
-
 void setup() { // No clue if any of this is correct
   Serial1.println("Initializing Arduino");
   Serial1.println("     Wuq©");
@@ -133,12 +142,10 @@ void setup() { // No clue if any of this is correct
   pinMode(US_TRIGGER, INPUT);
   pinMode(LED, OUTPUT);
   
-  enableBot();
+  startup();
 }
 
 void loop() {
   nh.spinOnce();
-  
-  //geometry_msgs::Twist message = Serial1.read();
     
 }
