@@ -11,7 +11,8 @@
 *
 * For specifications, see: 
 *   http://www.st.ewi.tudelft.nl/~koen/ti2726-b/robot-manual.pdf
-*wsws
+*
+
 * Created by:
 * Group number: 31
 * Student 1:
@@ -33,10 +34,13 @@
 #include <stdlib.h>
 #include <ros.h>
 #include <ArduinoHardware.h>
+#include <SimpleTimer.h>
 
 #include <std_msgs/Int32.h>
 #include <std_msgs/Empty.h>
 #include <geometry_msgs/Twist.h>
+
+SimpleTimer timer;
 
 int LEFT_FWD = 6;        // LCHB-100 H Bridge 1FWD
 int LEFT_BCK = 7;        // LCHB-100 H Bridge 1REV
@@ -56,22 +60,15 @@ class NewHardware : public ArduinoHardware {
         NewHardware() : ArduinoHardware(&Serial1, 57600) {};
 };
 
-void cmd_vel_cb(const geometry_msgs::Twist& msg) {
-    updateBot(msg.linear.x, msg.angular.z);
+void processTwist(const geometry_msgs::Twist& msg) {
+  //timer.restartTimer(0);
+  
+  updateBot(msg.linear.x, msg.angular.z);
 }
 
 // Adds a new subscriber
 ros::NodeHandle_<NewHardware> nh;
-ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", &cmd_vel_cb);
-
-void startup() {
-  digitalWrite(LEFT_FWD, LOW);
-  digitalWrite(LEFT_BCK, LOW);
-  digitalWrite(RIGHT_FWD, LOW);
-  digitalWrite(RIGHT_BCK, LOW);
-  
-  enableBot();
-}
+ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", &processTwist);
 
 void enableBot() {
 	digitalWrite(LEFT_ENABLE, HIGH);
@@ -90,8 +87,8 @@ void stopBot() {
 	analogWrite(RIGHT_BCK, 0);
 }
 
-int updateBot(double lineair_x, double angular_z) {
-  if (lineair_x == 0.0 && angular_z == 0.0) return -1;
+void updateBot(double lineair_x, double angular_z) {
+  if (lineair_x == 0.0 && angular_z == 0.0) return;
 	
     if (lineair_x > 0.0 && angular_z == 0.0) {
 	analogWrite(LEFT_BCK, 0);
@@ -105,47 +102,50 @@ int updateBot(double lineair_x, double angular_z) {
 	analogWrite(RIGHT_BCK, 25.5 * abs(lineair_x));
     } else if (lineair_x == 0.0 && angular_z > 0.0) {
 	// TODO Tweak values
-	analogWrite(LEFT_FWD, (25.5 * lineair_x) / angular_z);
-	analogWrite(RIGHT_FWD, 25.5 * lineair_x);
+	analogWrite(LEFT_FWD, 25.5 * angular_z);
+	analogWrite(RIGHT_FWD, 0);
 	analogWrite(LEFT_BCK, 0);
-	analogWrite(RIGHT_BCK, 0);
+	analogWrite(RIGHT_BCK, 25.5 * angular_z);
     } else if (lineair_x == 0.0 && angular_z < 0.0) {
 	// TODO Tweak values
-	analogWrite(LEFT_FWD, (25.5 * lineair_x) / abs(angular_z));
-	analogWrite(RIGHT_FWD, 25.5 * lineair_x);
-	analogWrite(LEFT_BCK, 0);
+	analogWrite(LEFT_FWD, 0);
+	analogWrite(RIGHT_FWD, 25.5 * abs(angular_z));
+	analogWrite(LEFT_BCK, 25.5 * abs(angular_z));
 	analogWrite(RIGHT_BCK, 0);
     }
-    return 0;
 }
 
-void setup() { // No clue if any of this is correct
-  Serial1.println("Initializing Arduino");
-  Serial1.println("     Wuq©");
-  
-  Serial.begin(57600);                 // Set the speed of the USB connection (in baud)
-  Serial1.begin(57600);                // Set the speed of the bluetooth connection (in baud)
+void setup() {
+  Serial.println("Initializing Arduino");
+  Serial.println("     Wuq©");
   
   nh.initNode();
   nh.subscribe(sub);
+  enableBot();
   
   pinMode(LEFT_FWD, OUTPUT);
   pinMode(LEFT_BCK, OUTPUT);
-  pinMode(LEFT_ENABLE, INPUT);
+  pinMode(LEFT_ENABLE, OUTPUT);
   pinMode(RIGHT_FWD, OUTPUT);
   pinMode(RIGHT_BCK, OUTPUT);
-  pinMode(RIGHT_ENABLE, INPUT);
+  pinMode(RIGHT_ENABLE, OUTPUT);
   
   pinMode(BLUETOOTH_TX, INPUT);
   pinMode(BLUETOOTH_RX, INPUT);
   pinMode(US_ECHO, INPUT);
-  pinMode(US_TRIGGER, INPUT);
+  pinMode(US_TRIGGER, OUTPUT);
   pinMode(LED, OUTPUT);
   
-  startup();
+  analogWrite(LEFT_FWD, 0);
+  analogWrite(LEFT_BCK, 0);
+  analogWrite(RIGHT_FWD, 0);
+  analogWrite(RIGHT_BCK, 0);
+  
+  timer.setTimeout(1000, stopBot);
 }
 
 void loop() {
   nh.spinOnce();
-    
+  
+  timer.run();
 }
