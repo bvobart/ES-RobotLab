@@ -41,6 +41,7 @@
 #include <geometry_msgs/Twist.h>
 
 SimpleTimer timer;
+long duration, distance; // Duration used to calculate distance of ultrasonic sensor
 
 int LEFT_FWD = 6;        // LCHB-100 H Bridge 1FWD
 int LEFT_BCK = 7;        // LCHB-100 H Bridge 1REV
@@ -146,6 +147,24 @@ void setup() {
 
 void loop() {
   nh.spinOnce();
-  
   timer.run();
+  
+  digitalWrite(US_TRIGGER, LOW); 
+  delayMicroseconds(2);
+  digitalWrite(US_TRIGGER, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(US_TRIGGER, LOW);
+  
+  duration = pulseIn(US_ECHO, HIGH);
+  distance = duration/58.2;
+ 
+  if (distance <= 15) {
+    stopBot();
+    digitalWrite(LED, HIGH); 
+  }
+  else {
+    digitalWrite(LED, LOW); 
+  }
+ 
+  delay(50);
 }
