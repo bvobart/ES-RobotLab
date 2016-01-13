@@ -41,6 +41,7 @@
 #include <geometry_msgs/Twist.h>
 
 SimpleTimer timer;
+int timerId;
 long duration, distance; // Duration used to calculate distance of ultrasonic sensor
 
 int LEFT_FWD = 6;        // LCHB-100 H Bridge 1FWD
@@ -62,9 +63,9 @@ class NewHardware : public ArduinoHardware {
 };
 
 void processTwist(const geometry_msgs::Twist& msg) {
-  //timer.restartTimer(0);
+  timer.restartTimer(timerId);
   
-  updateBot(msg.linear.x, msg.angular.z);
+  updateBot(msg.linear.x, msg.angular.x);
 }
 
 // Adds a new subscriber
@@ -122,7 +123,6 @@ void setup() {
   
   nh.initNode();
   nh.subscribe(sub);
-  enableBot();
   
   pinMode(LEFT_FWD, OUTPUT);
   pinMode(LEFT_BCK, OUTPUT);
@@ -137,18 +137,20 @@ void setup() {
   pinMode(US_TRIGGER, OUTPUT);
   pinMode(LED, OUTPUT);
   
+  enableBot();
+  
   analogWrite(LEFT_FWD, 0);
   analogWrite(LEFT_BCK, 0);
   analogWrite(RIGHT_FWD, 0);
   analogWrite(RIGHT_BCK, 0);
   
-  timer.setTimeout(1000, stopBot);
+  timerId = timer.setInterval(1000, stopBot);
 }
 
 void loop() {
   nh.spinOnce();
   timer.run();
-  
+
   digitalWrite(US_TRIGGER, LOW); 
   delayMicroseconds(2);
   digitalWrite(US_TRIGGER, HIGH);
